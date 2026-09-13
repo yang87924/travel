@@ -106,7 +106,7 @@ def render_row(r):
             f'<div><div class="name kai">{name}</div><div class="note">{note}</div></div></div>')
 
 
-def render_card(d):
+def card_body(d, web=False):
     chips = []
     for i, (label, tone) in enumerate(d['chips']):
         if i:
@@ -121,6 +121,22 @@ def render_card(d):
            f'<div class="node end">{svg(eicon)}</div>'
            f'<div><div class="name kai">{ename}</div><div class="note">{enote}</div></div></div>')
     checks = ''.join(f'<li>{c}</li>' for c in d['checks'])
+    eyebrow = f"DAY {d['day']} / 5" if web else f"DAY {d['day']} / 5　新竹．苗栗 5 天 4 夜"
+    tag, attrs = ('section', f' id="day{d["day"]}"') if web else ('div', f' style="height: {d["h"]}px;"')
+    return f"""<{tag} class="card"{attrs}>
+  <div class="ticket">
+    <div class="t-top"><span class="eyebrow mono">{eyebrow}</span><span class="chips">{''.join(chips)}</span></div>
+    <div class="t-date kai">{d['date']}<span class="t-dow">{d['dow']}</span></div>
+    <div class="t-route">{d['route']}</div>
+    <div class="perf"></div>
+    <div class="t-stats">{stats}</div>
+  </div>
+  <div class="line">{rows}{end}</div>
+  <div class="foot"><div class="foot-h">{ALERT}出發前確認</div><ul>{checks}</ul></div>
+</{tag}>"""
+
+
+def render_card(d):
     return f"""<!doctype html>
 <html>
 <head>
@@ -133,22 +149,105 @@ def render_card(d):
   {FONT_LINK}
   <style>{CSS}</style>
 </helmet>
-<div class="card" style="height: {d['h']}px;">
-  <div class="ticket">
-    <div class="t-top"><span class="eyebrow mono">DAY {d['day']} / 5　新竹．苗栗 5 天 4 夜</span><span class="chips">{''.join(chips)}</span></div>
-    <div class="t-date kai">{d['date']}<span class="t-dow">{d['dow']}</span></div>
-    <div class="t-route">{d['route']}</div>
-    <div class="perf"></div>
-    <div class="t-stats">{stats}</div>
-  </div>
-  <div class="line">{rows}{end}</div>
-  <div class="foot"><div class="foot-h">{ALERT}出發前確認</div><ul>{checks}</ul></div>
-</div>
+{card_body(d)}
 </x-dc>
 </body>
 </html>
 """
 
+
+# ===== 網頁版（GitHub Pages 首頁）=====
+ITINERARY = '新竹苗栗5天4夜-20260920'
+
+WEB_CSS = """
+:root { color-scheme: light; }
+body { margin: 0; background: #DCE3EB; color: #1E3350; padding-inline: 16px;
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
+.page { max-width: 480px; margin: 0 auto; padding-block: 24px 48px; display: flex; flex-direction: column; gap: 24px; }
+.top { display: flex; flex-direction: column; gap: 10px; }
+.top h1 { margin: 0; font-size: 30px; line-height: 1.2; font-weight: 700; text-wrap: balance; }
+.top p { margin: 0; font-size: 14px; line-height: 1.5; color: #57687D; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500;
+  text-decoration: none; color: #1E3350; background: #F4F6F8; border: 1px solid #B8C4D2; }
+.links a:hover { background: #1E3350; color: #FFFFFF; border-color: #1E3350; }
+.links svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.days { position: sticky; top: 0; z-index: 5; margin-inline: -16px; padding: 10px 16px; background: #DCE3EB;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.days a { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 0 5px; border-radius: 8px; text-decoration: none;
+  font-family: 'IBM Plex Mono', 'Consolas', 'Noto Sans TC', monospace; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.days a span { font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; font-size: 11px; font-weight: 500; }
+.days a.hc { background: #F4E1D4; color: #A44E20; }
+.days a.ml { background: #DAEBE1; color: #2C6E4E; }
+.days a.both { background: linear-gradient(90deg, #F4E1D4 50%, #DAEBE1 50%); color: #1E3350; }
+.days a:hover, .days a.today { background: #1E3350; color: #FFFFFF; }
+.days a:focus-visible, .links a:focus-visible { outline: 2px solid #1E3350; outline-offset: 2px; }
+.card { width: 100%; height: auto; border-radius: 12px; scroll-margin-top: 72px; box-shadow: 0 1px 2px rgba(30, 51, 80, .12); }
+.foot-note { margin: 0; font-size: 12px; line-height: 1.6; color: #57687D; text-align: center; }
+@media (max-width: 460px) {
+  .card { padding: 20px 16px; }
+  .ticket { padding: 14px 12px 12px; }
+  .perf { margin-inline: -12px; }
+  .t-stats { gap: 8px; }
+  .val { font-size: clamp(12px, 3.55vw, 17px); }
+  .t-date { font-size: 40px; }
+  .name { font-size: 16px; }
+}
+"""
+
+LINK_ICON = {
+    'doc': '<svg viewBox="0 0 16 16"><path d="M4 1.8h5.5L12.5 5v9.2H4z"></path><path d="M9.3 1.8V5h3.2M6 8.2h4.5M6 10.8h4.5"></path></svg>',
+    'pdf': '<svg viewBox="0 0 16 16"><path d="M8 2v8.2M4.8 7.2L8 10.4l3.2-3.2"></path><path d="M2.8 11.4v2.6h10.4v-2.6"></path></svg>',
+}
+
+
+def render_web():
+    from urllib.parse import quote
+    months = {'9/20': '2026-09-20', '9/21': '2026-09-21', '9/22': '2026-09-22', '9/23': '2026-09-23', '9/24': '2026-09-24'}
+    nav = []
+    for d in DAYS:
+        tones = [tone for _, tone in d['chips']]
+        cls = 'both' if len(set(tones)) > 1 else tones[0]
+        nav.append(f'<a class="{cls}" href="#day{d["day"]}" data-date="{months[d["date"]]}">{d["date"]}<span>{d["dow"]}</span></a>')
+    cards = chr(10).join(card_body(d, web=True) for d in DAYS)
+    return f"""<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>新竹苗栗每日行程卡</title>
+<meta name="description" content="新竹・苗栗 5 天 4 夜（2026/9/20–9/24）每日行程卡">
+{FONT_LINK}
+<style>{CSS}{WEB_CSS}</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <h1 class="kai">新竹．苗栗 5 天 4 夜</h1>
+    <p>2026/9/20（日）– 9/24（四）・彰化出發・自強3000＋出站租機車・機車每段 30 分鐘內</p>
+    <div class="links">
+      <a href="{quote(ITINERARY)}.html">{LINK_ICON['doc']}完整行程</a>
+      <a href="{quote(ITINERARY)}.pdf">{LINK_ICON['pdf']}PDF 版</a>
+    </div>
+  </header>
+  <nav class="days" aria-label="選擇日期">{''.join(nav)}</nav>
+{cards}
+  <p class="foot-note">費用都是兩人合計；營業時間以出發前查到的為準。<br>最後更新：2026/9/13</p>
+</div>
+<script>
+(function () {{
+  try {{
+    var today = new Intl.DateTimeFormat('en-CA', {{ timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }}).format(new Date());
+    var tab = document.querySelector('.days a[data-date="' + today + '"]');
+    if (!tab) return;
+    tab.classList.add('today');
+    if (!location.hash) document.querySelector(tab.getAttribute('href')).scrollIntoView();
+  }} catch (e) {{}}
+}})();
+</script>
+</body>
+</html>
+"""
 
 DAYS = [
     {
@@ -317,6 +416,9 @@ def main():
     with open(os.path.join(OUT, 'canvas.json'), 'w', encoding='utf-8') as fh:
         json.dump(canvas, fh, ensure_ascii=False, indent=2)
     print('wrote', len(names), 'artboards:', [(d['file'], d['h']) for d in DAYS])
+    with open(os.path.join(OUT, '..', 'index.html'), 'w', encoding='utf-8') as fh:
+        fh.write(render_web())
+    print('wrote ../index.html')
 
 
 if __name__ == '__main__':
